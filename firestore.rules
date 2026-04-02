@@ -28,6 +28,16 @@ service cloud.firestore {
     //   - resultText: string (optional)
     //   - createdAt: string (required)
     //
+    // Collection: settings
+    // Document ID: {settingId}
+    // Fields:
+    //   - userId: string (required)
+    //   - openAIKey: string (optional)
+    //   - anthropicKey: string (optional)
+    //   - analizaKey: string (optional)
+    //   - nexusAIKey: string (optional)
+    //   - updatedAt: string (required)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -102,6 +112,15 @@ service cloud.firestore {
              data.createdAt is string && isValidDateString(data.createdAt);
     }
 
+    function isValidSettings(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.updatedAt is string && isValidDateString(data.updatedAt) &&
+             (!('openAIKey' in data) || (data.openAIKey is string && data.openAIKey.size() < 500)) &&
+             (!('anthropicKey' in data) || (data.anthropicKey is string && data.anthropicKey.size() < 500)) &&
+             (!('analizaKey' in data) || (data.analizaKey is string && data.analizaKey.size() < 500)) &&
+             (!('nexusAIKey' in data) || (data.nexusAIKey is string && data.nexusAIKey.size() < 500));
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -131,6 +150,13 @@ service cloud.firestore {
       allow read: if isDocOwner();
       allow create: if isAuthenticated() && hasRequiredFields(['id', 'userId', 'keyHash', 'name', 'createdAt']) && isValidApiKey(request.resource.data);
       allow update: if isDocOwner() && isValidApiKey(request.resource.data) && request.resource.data.userId == resource.data.userId && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isDocOwner();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && hasRequiredFields(['userId', 'updatedAt']) && isValidSettings(request.resource.data);
+      allow update: if isDocOwner() && isValidSettings(request.resource.data) && request.resource.data.userId == resource.data.userId;
       allow delete: if isDocOwner();
     }
   }
