@@ -1,21 +1,28 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getGeminiClient } from '../lib/gemini';
-import { Video, Loader2, Download, Wand2, ChevronLeft } from 'lucide-react';
+import { Video, Loader2, Download, Wand2, ChevronLeft, Save } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export const VideoStudio = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('16:9');
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState('');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [rawVideoUri, setRawVideoUri] = useState<string | null>(null);
 
   const handleGenerate = async () => {
     if (!prompt.trim() || loading) return;
     setLoading(true);
     setVideoUrl(null);
+    setRawVideoUri(null);
     setStatus('Initializing generation...');
 
     try {
@@ -40,6 +47,7 @@ export const VideoStudio = () => {
       const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
       
       if (downloadLink) {
+        setRawVideoUri(downloadLink);
         // We need to fetch it with the API key header
         const response = await fetch(downloadLink, {
           method: 'GET',
@@ -60,6 +68,28 @@ export const VideoStudio = () => {
       setStatus('An error occurred during generation.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveToGallery = async () => {
+    if (!user || !videoUrl) return;
+    setIsSaving(true);
+    try {
+      // We save the raw URI if available, or a placeholder
+      // Note: raw URI might expire, but it's better than nothing without Storage
+      await addDoc(collection(db, 'users', user.uid, 'gallery'), {
+        type: 'video',
+        title: prompt.substring(0, 50) + '...',
+        content: videoUrl, // This is a blob URL, won't work after refresh
+        rawUri: rawVideoUri,
+        createdAt: serverTimestamp()
+      });
+      alert('Video guardado en tu galería (Nota: Los videos generados son temporales).');
+    } catch (error) {
+      console.error("Error saving video:", error);
+      alert("Error al guardar el video.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -130,13 +160,33 @@ export const VideoStudio = () => {
         {/* Result Area */}
         <div className="flex-1 bg-neutral-900 border border-neutral-800 rounded-2xl flex items-center justify-center overflow-hidden relative min-h-[400px]">
           {videoUrl ? (
-            <video 
-              src={videoUrl} 
-              controls 
-              autoPlay 
-              loop 
-              className="w-full h-full object-contain"
-            />
+            <div className="relative w-full h-full">
+              <video 
+                src={videoUrl} 
+                controls 
+                autoPlay 
+                loop 
+                className="w-full h-full object-contain"
+              />
+              <div className="absolute top-4 right-4 flex gap-2">
+                <button 
+                  onClick={saveToGallery}
+                  disabled={isSaving}
+                  className="p-2 bg-black/50 hover:bg-black/80 backdrop-blur-md text-white rounded-lg transition-colors"
+                  title="Guardar en Galería"
+                >
+                  {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                </button>
+                <a 
+                  href={videoUrl} 
+                  download="nexus-ai-video.mp4"
+                  className="p-2 bg-black/50 hover:bg-black/80 backdrop-blur-md text-white rounded-lg transition-colors"
+                  title="Descargar"
+                >
+                  <Download className="w-5 h-5" />
+                </a>
+              </div>
+            </div>
           ) : (
             <div className="text-center text-neutral-500">
               <Video className="w-12 h-12 mx-auto mb-3 opacity-20" />
