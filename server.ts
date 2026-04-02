@@ -7,8 +7,9 @@ import nodemailer from 'nodemailer';
 
 dotenv.config();
 
+export const app = express();
+
 async function startServer() {
-  const app = express();
   const PORT = 3000;
 
   // Increase payload limit for video uploads
