@@ -18,30 +18,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log('AuthContext: Initializing onAuthStateChanged');
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log('AuthContext: Auth state changed', currentUser?.email);
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return unsubscribe;
-  }, []);
+    let unsubscribeDoc: (() => void) | null = null;
 
-  useEffect(() => {
-    if (user) {
-      const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
-        if (doc.exists()) {
-          setCredits(doc.data().credits || 0);
-        }
-      });
-      return unsubscribe;
-    } else {
-      setCredits(0);
-    }
-  }, [user]);
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      console.log('AuthContext: Auth state changed', currentUser ? `User: ${currentUser.email}` : 'No user');
+      
+      if (unsubscribeDoc) {
+        console.log('AuthContext: Cleaning up previous Firestore subscription');
+        unsubscribeDoc();
+        unsubscribeDoc = null;
+      }
+
+      setUser(currentUser);
+      
+      if (currentUser) {
+        console.log('AuthContext: Setting up Firestore subscription for', currentUser.uid);
+        const userRef = doc(db, 'users', currentUser.uid);
+        unsubscribeDoc = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            console.log('AuthContext: Firestore data received', { credits: data.credits });
+            setCredits(data.credits || 0);
+          } else {
+            console.log('AuthContext: Firestore document does not exist for user');
+            setCredits(0);
+          }
+          setLoading(false);
+        }, (error) => {
+          console.error('AuthContext: Firestore subscription error', error);
+          setLoading(false);
+        });
+      } else {
+        setCredits(0);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      console.log('AuthContext: Unmounting, cleaning up all subscriptions');
+      unsubscribeAuth();
+      if (unsubscribeDoc) unsubscribeDoc();
+    };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, credits }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
