@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Loader2, Globe, FileText, Sparkles, ShieldCheck, ExternalLink, ChevronLeft } from 'lucide-react';
+import { Search, Loader2, Globe, FileText, Sparkles, ShieldCheck, ExternalLink, ChevronLeft, Save } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { FileUploader } from '../components/FileUploader';
 import { cn } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export const DeepResearch = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [result, setResult] = useState('');
   const [sources, setSources] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [files, setFiles] = useState<{ data: string; mimeType: string; name: string }[]>([]);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -44,6 +49,25 @@ export const DeepResearch = () => {
       setResult("Hubo un error al realizar la investigación.");
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const saveToGallery = async () => {
+    if (!user || !result) return;
+    setIsSaving(true);
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'gallery'), {
+        type: 'document',
+        title: query.substring(0, 50) + '...',
+        content: result,
+        createdAt: serverTimestamp()
+      });
+      alert('Investigación guardada en tu galería.');
+    } catch (error) {
+      console.error("Error saving research:", error);
+      alert("Error al guardar la investigación.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -141,7 +165,15 @@ export const DeepResearch = () => {
             ) : result ? (
               <div className="max-w-4xl mx-auto space-y-12">
                 <div className="bg-[#050505] border border-orange-500/10 rounded-sm p-8 shadow-2xl relative">
-                  <div className="absolute top-0 right-0 p-4">
+                  <div className="absolute top-0 right-0 p-4 flex gap-2">
+                    <button 
+                      onClick={saveToGallery}
+                      disabled={isSaving}
+                      className="px-2 py-1 bg-orange-500/10 border border-orange-500/20 rounded text-[8px] font-black text-orange-500 uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all flex items-center gap-1"
+                    >
+                      {isSaving ? <Loader2 className="w-2 h-2 animate-spin" /> : <Save className="w-2 h-2" />}
+                      {isSaving ? 'Guardando...' : 'Guardar'}
+                    </button>
                     <div className="px-2 py-1 bg-orange-500/10 border border-orange-500/20 rounded text-[8px] font-black text-orange-500 uppercase tracking-widest">
                       Reporte Final
                     </div>
