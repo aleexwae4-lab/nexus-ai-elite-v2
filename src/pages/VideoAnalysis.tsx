@@ -1,17 +1,22 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Video, Upload, Loader2, Sparkles, ShieldCheck, Play, FileText, Info, ChevronLeft } from 'lucide-react';
+import { Video, Upload, Loader2, Sparkles, ShieldCheck, Play, FileText, Info, ChevronLeft, Save } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { FileUploader } from '../components/FileUploader';
 import { cn } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export const VideoAnalysis = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [prompt, setPrompt] = useState('Analiza este video en detalle. ¿Qué está sucediendo?');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [result, setResult] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [files, setFiles] = useState<{ data: string; mimeType: string; name: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,6 +79,25 @@ export const VideoAnalysis = () => {
       alert("Hubo un error en el análisis.");
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const saveToGallery = async () => {
+    if (!user || !result) return;
+    setIsSaving(true);
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'gallery'), {
+        type: 'document',
+        title: `Análisis de Video: ${videoFile?.name || 'Sin nombre'}`,
+        content: result,
+        createdAt: serverTimestamp()
+      });
+      alert('Análisis guardado en tu galería.');
+    } catch (error) {
+      console.error("Error saving analysis:", error);
+      alert("Error al guardar el análisis.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -193,7 +217,15 @@ export const VideoAnalysis = () => {
             ) : result ? (
               <div className="max-w-4xl mx-auto">
                 <div className="bg-[#050505] border border-orange-500/10 rounded-sm p-8 shadow-2xl relative">
-                  <div className="absolute top-0 right-0 p-4">
+                  <div className="absolute top-0 right-0 p-4 flex gap-2">
+                    <button 
+                      onClick={saveToGallery}
+                      disabled={isSaving}
+                      className="px-2 py-1 bg-orange-500/10 border border-orange-500/20 rounded text-[8px] font-black text-orange-500 uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all flex items-center gap-1"
+                    >
+                      {isSaving ? <Loader2 className="w-2 h-2 animate-spin" /> : <Save className="w-2 h-2" />}
+                      {isSaving ? 'Guardando...' : 'Guardar'}
+                    </button>
                     <div className="px-2 py-1 bg-orange-500/10 border border-orange-500/20 rounded text-[8px] font-black text-orange-500 uppercase tracking-widest">
                       Reporte de Visión
                     </div>
