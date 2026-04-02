@@ -20,6 +20,7 @@ export const Dashboard = () => {
     { title: 'Video Studio', desc: 'Text-to-Video e Image-to-Video con Veo 3.', icon: Video, to: '/app/video', color: 'text-red-500', bg: 'bg-red-500/10' },
     { title: 'Audio & Music', desc: 'Text-to-Speech y generación de música con Lyria.', icon: Music, to: '/app/audio', color: 'text-pink-500', bg: 'bg-pink-500/10' },
     { title: 'Live Voice', desc: 'Conversaciones de voz en tiempo real con baja latencia.', icon: Mic, to: '/app/live', color: 'text-teal-500', bg: 'bg-teal-500/10' },
+    { title: 'Nexus Gallery', desc: 'Archivo central de todas tus creaciones de élite.', icon: LayoutGrid, to: '/app/gallery', color: 'text-orange-500', bg: 'bg-orange-500/10' },
   ];
 
   return (
