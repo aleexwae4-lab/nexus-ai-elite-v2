@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
-import { Key, Plus, Trash2, Copy, Check, ShieldAlert, Code, BrainCircuit, Settings as SettingsIcon, ShieldCheck, Zap, Sparkles, Loader2, ChevronLeft } from 'lucide-react';
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { Key, Plus, Trash2, Copy, Check, ShieldAlert, Code, BrainCircuit, Settings as SettingsIcon, ShieldCheck, Zap, Sparkles, Loader2, ChevronLeft, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
+import { NexusAIClient } from '../lib/nexus-api';
 
 export const Settings = () => {
   const navigate = useNavigate();
@@ -15,10 +16,13 @@ export const Settings = () => {
   const [newKeyName, setNewKeyName] = useState('');
   const [showNewKey, setShowNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   // External API Keys State
   const [openAIKey, setOpenAIKey] = useState('');
   const [anthropicKey, setAnthropicKey] = useState('');
+  const [analizaKey, setAnalizaKey] = useState('');
+  const [nexusAIKey, setNexusAIKey] = useState('nx_ceeqn7a4eohk6y4uy8ra6q');
   
   // Master Prompts State
   const [prompts, setPrompts] = useState({
@@ -34,8 +38,26 @@ export const Settings = () => {
   useEffect(() => {
     if (user) {
       fetchApiKeys();
+      fetchSettings();
     }
   }, [user]);
+
+  const fetchSettings = async () => {
+    if (!user) return;
+    try {
+      const q = query(collection(db, 'settings'), where('userId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const data = querySnapshot.docs[0].data();
+        if (data.openAIKey) setOpenAIKey(data.openAIKey);
+        if (data.anthropicKey) setAnthropicKey(data.anthropicKey);
+        if (data.analizaKey) setAnalizaKey(data.analizaKey);
+        if (data.nexusAIKey) setNexusAIKey(data.nexusAIKey);
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
 
   const fetchApiKeys = async () => {
     if (!user) return;
@@ -48,6 +70,53 @@ export const Settings = () => {
       console.error('Error fetching API keys:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const syncNexusAI = async () => {
+    if (!nexusAIKey) return;
+    setSyncing(true);
+    try {
+      const client = new NexusAIClient(nexusAIKey);
+      // Inyectar secretos en otros sistemas
+      await client.injectSecrets('Vercel', {
+        'NEXUSAI_API_KEY': nexusAIKey,
+        'OPENAI_API_KEY': openAIKey,
+        'ANTHROPIC_API_KEY': anthropicKey,
+        'ANALIZA_API_KEY': analizaKey
+      });
+      
+      // Persistir localmente también
+      if (user) {
+        const q = query(collection(db, 'settings'), where('userId', '==', user.uid));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          await addDoc(collection(db, 'settings'), {
+            userId: user.uid,
+            openAIKey,
+            anthropicKey,
+            analizaKey,
+            nexusAIKey,
+            updatedAt: new Date().toISOString()
+          });
+        } else {
+          const docId = querySnapshot.docs[0].id;
+          await updateDoc(doc(db, 'settings', docId), {
+            openAIKey,
+            anthropicKey,
+            analizaKey,
+            nexusAIKey,
+            updatedAt: new Date().toISOString()
+          });
+        }
+      }
+      
+      alert('Sincronización con el ecosistema Nexus completada con éxito.');
+    } catch (error) {
+      console.error('Error syncing Nexus AI:', error);
+      alert('Error en la sincronización. Verifica tu llave de acceso.');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -152,8 +221,36 @@ export const Settings = () => {
                       className="w-full bg-black border border-zinc-800 rounded-sm px-4 py-3 text-xs text-white outline-none focus:border-orange-500/50 transition-all font-mono"
                     />
                   </div>
-                  <button className="w-full py-4 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-sm hover:bg-zinc-200 transition-all">
-                    Sincronizar Proveedores
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Analiza API Key (X-API-KEY)</label>
+                    <input
+                      type="password"
+                      value={analizaKey}
+                      onChange={(e) => setAnalizaKey(e.target.value)}
+                      placeholder="analiza_..."
+                      className="w-full bg-black border border-zinc-800 rounded-sm px-4 py-3 text-xs text-white outline-none focus:border-orange-500/50 transition-all font-mono"
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
+                      <BrainCircuit className="w-3 h-3" /> Nexus AI Ecosystem Key
+                    </label>
+                    <input
+                      type="password"
+                      value={nexusAIKey}
+                      onChange={(e) => setNexusAIKey(e.target.value)}
+                      placeholder="nx_..."
+                      className="w-full bg-black border border-orange-500/30 rounded-sm px-4 py-3 text-xs text-orange-400 outline-none focus:border-orange-500 transition-all font-mono"
+                    />
+                    <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest">Esta llave permite la inyección automática en otros sistemas del ecosistema Nexus.</p>
+                  </div>
+                  <button 
+                    onClick={syncNexusAI}
+                    disabled={syncing || !nexusAIKey}
+                    className="w-full py-4 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-sm hover:bg-zinc-200 transition-all flex items-center justify-center gap-2"
+                  >
+                    {syncing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                    {syncing ? 'Sincronizando...' : 'Sincronizar Ecosistema Nexus'}
                   </button>
                 </div>
               </section>
