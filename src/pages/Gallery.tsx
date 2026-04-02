@@ -52,7 +52,8 @@ export const Gallery = () => {
   const getIcon = (type: string) => {
     switch (type) {
       case 'document': return <FileText className="w-5 h-5 text-orange-500" />;
-      case 'podcast': return <Mic className="w-5 h-5 text-orange-500" />;
+      case 'podcast':
+      case 'audio': return <Mic className="w-5 h-5 text-orange-500" />;
       case 'image': return <ImageIcon className="w-5 h-5 text-orange-500" />;
       case 'video': return <Video className="w-5 h-5 text-orange-500" />;
       case 'email': return <Mail className="w-5 h-5 text-orange-500" />;
@@ -113,7 +114,7 @@ export const Gallery = () => {
 
             <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
               <div className="flex items-center gap-1 bg-black border border-zinc-800 rounded-sm p-1">
-                {['all', 'document', 'image', 'video', 'podcast', 'email'].map((t) => (
+                {['all', 'document', 'image', 'video', 'audio', 'podcast', 'email'].map((t) => (
                   <button
                     key={t}
                     onClick={() => setFilter(t)}
@@ -122,7 +123,7 @@ export const Gallery = () => {
                       filter === t ? "bg-orange-500 text-white" : "text-zinc-600 hover:text-zinc-400"
                     )}
                   >
-                    {t === 'all' ? 'TODOS' : t === 'document' ? 'DOCS' : t === 'image' ? 'IMG' : t === 'video' ? 'VID' : t === 'podcast' ? 'AUD' : 'EMAIL'}
+                    {t === 'all' ? 'TODOS' : t === 'document' ? 'DOCS' : t === 'image' ? 'IMG' : t === 'video' ? 'VID' : t === 'audio' ? 'AUD' : t === 'podcast' ? 'POD' : 'EMAIL'}
                   </button>
                 ))}
               </div>
@@ -192,9 +193,24 @@ export const Gallery = () => {
                     {item.type === 'image' && (
                       <img src={item.content} alt={item.title} className="absolute inset-0 w-full h-full object-cover opacity-50 hover:opacity-100 transition-opacity" />
                     )}
-                    {item.type === 'podcast' && (
-                      <div className="flex items-center justify-center h-full">
+                    {(item.type === 'podcast' || item.type === 'audio') && (
+                      <div className="flex flex-col items-center justify-center h-full gap-2">
                         <Mic className="w-8 h-8 text-orange-500/20" />
+                        <audio 
+                          src={item.base64 ? `data:audio/mp3;base64,${item.base64}` : item.content} 
+                          controls 
+                          className="w-full h-8 scale-75 opacity-50 hover:opacity-100 transition-opacity" 
+                        />
+                      </div>
+                    )}
+                    {item.type === 'video' && (
+                      <div className="flex items-center justify-center h-full">
+                        <video 
+                          src={item.content} 
+                          className="absolute inset-0 w-full h-full object-cover opacity-50 hover:opacity-100 transition-opacity" 
+                          poster={item.thumbnail}
+                        />
+                        <Video className="w-8 h-8 text-orange-500/20 relative z-10" />
                       </div>
                     )}
                     {item.type === 'email' && (
