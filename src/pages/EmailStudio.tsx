@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Send, Loader2, Sparkles, CheckCircle2, FileText, Layout, ShieldCheck, ChevronLeft } from 'lucide-react';
+import { Mail, Send, Loader2, Sparkles, CheckCircle2, FileText, Layout, ShieldCheck, ChevronLeft, Save } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { FileUploader } from '../components/FileUploader';
 import { cn } from '../lib/utils';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export const EmailStudio = () => {
   const navigate = useNavigate();
-  const { credits } = useAuth();
+  const { user, credits } = useAuth();
   const [to, setTo] = useState('');
   const [prompt, setPrompt] = useState('');
   const [subject, setSubject] = useState('');
@@ -16,6 +18,7 @@ export const EmailStudio = () => {
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -66,6 +69,25 @@ export const EmailStudio = () => {
       alert("Hubo un error al generar el correo.");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const saveToGallery = async () => {
+    if (!user || !body) return;
+    setIsSaving(true);
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'gallery'), {
+        type: 'email',
+        title: subject || 'Correo sin asunto',
+        content: body,
+        createdAt: serverTimestamp()
+      });
+      alert('Correo guardado en tu galería.');
+    } catch (error) {
+      console.error("Error saving email:", error);
+      alert("Error al guardar el correo.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -233,8 +255,13 @@ export const EmailStudio = () => {
                   <button className="p-2 text-zinc-500 hover:text-orange-500 transition-colors">
                     <Layout className="w-4 h-4" />
                   </button>
-                  <button className="p-2 text-zinc-500 hover:text-orange-500 transition-colors">
-                    <FileText className="w-4 h-4" />
+                  <button 
+                    onClick={saveToGallery}
+                    disabled={isSaving || !body}
+                    className="p-2 text-zinc-500 hover:text-orange-500 transition-colors"
+                    title="Guardar en Galería"
+                  >
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   </button>
                 </div>
                 
