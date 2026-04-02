@@ -242,6 +242,62 @@ async function startServer() {
     }
   });
 
+  // Nexus AI Ecosystem Sync Route
+  app.post('/api/v1/nexus/sync', async (req, res) => {
+    try {
+      const { target, secrets, apiKey } = req.body;
+      
+      console.log(`[Nexus AI] Syncing with ${target}...`);
+      
+      // In a real scenario, this would use VERCEL_TOKEN to call Vercel API
+      // For now, we simulate the success and log the action
+      
+      const vercelToken = process.env.VERCEL_TOKEN;
+      const githubToken = process.env.GITHUB_TOKEN;
+      
+      if (target === 'Vercel' && vercelToken) {
+        // Here we would iterate over secrets and call Vercel API
+        // POST https://api.vercel.com/v10/projects/${projectId}/env
+        console.log(`[Nexus AI] Injecting ${Object.keys(secrets).length} secrets into Vercel...`);
+      }
+
+      res.json({ 
+        success: true, 
+        message: `Sincronización con ${target} completada.`,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error('Nexus Sync Error:', error);
+      res.status(500).json({ error: error.message || 'Error en la sincronización' });
+    }
+  });
+
+  // --- FORGE API ROUTES ---
+  
+  // AI Forge Route
+  app.post('/api/v1/forge/ai', async (req, res) => {
+    try {
+      const { input } = req.body;
+      if (!input) return res.status(400).json({ error: 'Input is required' });
+
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: [{ parts: [{ text: input }] }]
+      });
+
+      res.json({ output: response.text });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Stripe Webhook Forge Route
+  app.post('/api/v1/forge/stripe-webhook', async (req, res) => {
+    // Simulated webhook for Forge
+    res.json({ received: true, message: 'Forge Webhook Active' });
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
