@@ -74,9 +74,8 @@ function setupAndPush(repoUrl: string) {
     }
 
     // Push
-    // Use token in URL for authentication if needed, but usually the environment handles it
     const authRepoUrl = repoUrl.replace('https://', `https://${USERNAME}:${GITHUB_TOKEN}@`);
-    execSync(`git push -u origin main --force`, { stdio: 'inherit' });
+    execSync(`git push -u ${authRepoUrl} main --force`, { stdio: 'inherit' });
     console.log("✅ Código subido con éxito.");
   } catch (err) {
     console.error("❌ Error en Git:", err);
