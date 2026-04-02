@@ -1,0 +1,5 @@
+{
+  "name": "Nexus AI",
+  "description": "An all-in-one AI creation suite with Chat, Image, Video, Audio, and Live Voice capabilities.",
+  "requestFramePermissions": ["microphone"]
+}
