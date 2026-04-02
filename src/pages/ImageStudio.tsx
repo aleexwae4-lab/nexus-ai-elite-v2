@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getGeminiClient } from '../lib/gemini';
-import { Image as ImageIcon, Loader2, Download, Wand2, ChevronLeft } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Download, Wand2, ChevronLeft, Save } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export const ImageStudio = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState('1:1');
   const [quality, setQuality] = useState('1K');
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [resultImage, setResultImage] = useState<string | null>(null);
 
   const handleGenerate = async () => {
@@ -47,6 +52,25 @@ export const ImageStudio = () => {
       alert('Failed to generate image. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveToGallery = async () => {
+    if (!user || !resultImage) return;
+    setIsSaving(true);
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'gallery'), {
+        type: 'image',
+        title: prompt.substring(0, 50) + '...',
+        content: resultImage,
+        createdAt: serverTimestamp()
+      });
+      alert('Imagen guardada en tu galería.');
+    } catch (error) {
+      console.error("Error saving image:", error);
+      alert("Error al guardar la imagen.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -134,13 +158,24 @@ export const ImageStudio = () => {
           {resultImage ? (
             <>
               <img src={resultImage} alt="Generated" className="w-full h-full object-contain" />
-              <a 
-                href={resultImage} 
-                download="nexus-ai-image.png"
-                className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/80 backdrop-blur-md text-white rounded-lg transition-colors"
-              >
-                <Download className="w-5 h-5" />
-              </a>
+              <div className="absolute top-4 right-4 flex gap-2">
+                <button 
+                  onClick={saveToGallery}
+                  disabled={isSaving}
+                  className="p-2 bg-black/50 hover:bg-black/80 backdrop-blur-md text-white rounded-lg transition-colors"
+                  title="Guardar en Galería"
+                >
+                  {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                </button>
+                <a 
+                  href={resultImage} 
+                  download="nexus-ai-image.png"
+                  className="p-2 bg-black/50 hover:bg-black/80 backdrop-blur-md text-white rounded-lg transition-colors"
+                  title="Descargar"
+                >
+                  <Download className="w-5 h-5" />
+                </a>
+              </div>
             </>
           ) : (
             <div className="text-center text-neutral-500">
