@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getGeminiClient } from '../lib/gemini';
-import { Music, Loader2, Wand2, Mic, Settings2, FileText, Music2, ChevronLeft } from 'lucide-react';
+import { Music, Loader2, Wand2, Mic, Settings2, FileText, Music2, ChevronLeft, Save } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Modality } from '@google/genai';
 import { FileUploader } from '../components/FileUploader';
+import { useAuth } from '../contexts/AuthContext';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const GENRES = ['Cinematic', 'Electronic', 'Lo-fi', 'Ambient', 'Orchestral', 'Pop', 'Rock', 'Jazz', 'Techno', 'Cyberpunk'];
 const KEYS = ['C Major', 'A Minor', 'G Major', 'E Minor', 'D Major', 'B Minor', 'F Major', 'D Minor'];
@@ -19,10 +22,13 @@ const VOICES = [
 
 export const AudioStudio = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [mode, setMode] = useState<'tts' | 'music'>('tts');
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [base64Data, setBase64Data] = useState<string | null>(null);
   const [files, setFiles] = useState<{ data: string; mimeType: string; name: string }[]>([]);
   
   // Advanced Options
@@ -36,6 +42,7 @@ export const AudioStudio = () => {
     if (!prompt.trim() || loading) return;
     setLoading(true);
     setAudioUrl(null);
+    setBase64Data(null);
 
     try {
       const ai = getGeminiClient();
@@ -61,6 +68,7 @@ export const AudioStudio = () => {
 
         const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
         if (base64Audio) {
+          setBase64Data(base64Audio);
           const binary = atob(base64Audio);
           const bytes = new Uint8Array(binary.length);
           for (let i = 0; i < binary.length; i++) {
@@ -102,6 +110,7 @@ export const AudioStudio = () => {
         }
 
         if (audioBase64) {
+          setBase64Data(audioBase64);
           const binary = atob(audioBase64);
           const bytes = new Uint8Array(binary.length);
           for (let i = 0; i < binary.length; i++) {
@@ -116,6 +125,27 @@ export const AudioStudio = () => {
       alert('An error occurred during generation.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveToGallery = async () => {
+    if (!user || !audioUrl) return;
+    setIsSaving(true);
+    try {
+      // If base64 is too large, it might fail. We'll try anyway.
+      await addDoc(collection(db, 'users', user.uid, 'gallery'), {
+        type: mode === 'tts' ? 'audio' : 'podcast',
+        title: prompt.substring(0, 50) + '...',
+        content: audioUrl, // This is a blob URL, won't work after refresh
+        base64: base64Data, // This is the real data
+        createdAt: serverTimestamp()
+      });
+      alert('Audio guardado en tu galería.');
+    } catch (error) {
+      console.error("Error saving audio:", error);
+      alert("Error al guardar el audio. Es posible que el archivo sea demasiado grande para la base de datos.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -291,7 +321,15 @@ export const AudioStudio = () => {
                 <audio src={audioUrl} controls className="w-full custom-audio-player" />
               </div>
 
-              <div className="mt-6 flex justify-end">
+              <div className="mt-6 flex justify-end gap-3">
+                <button 
+                  onClick={saveToGallery}
+                  disabled={isSaving}
+                  className="px-4 py-2 bg-orange-500/10 border border-orange-500/20 text-[10px] font-black uppercase tracking-widest text-orange-500 hover:bg-orange-500 hover:text-white transition-all flex items-center gap-2"
+                >
+                  {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                  {isSaving ? 'Guardando...' : 'Guardar en Galería'}
+                </button>
                 <button 
                   onClick={() => {
                     const link = document.createElement('a');
