@@ -149,23 +149,22 @@ export const Landing = () => {
           </div>
 
           <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-black italic tracking-tighter leading-[0.95] mb-12 uppercase max-w-4xl">
-            <span className="text-white">Nexus Elite</span> no es<br />
-            solo una herramienta;<br />
+            <span className="text-white">Nexus Elite</span> <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-b from-orange-400 to-orange-600 drop-shadow-[0_0_30px_rgba(249,115,22,0.3)]">
-              es tu socio<br />tecnológico de<br />élite
+              Modo Dios Activado
             </span>
           </h1>
 
           <div className="mb-12">
             <div className="inline-block px-6 py-2 border border-orange-500/30 bg-orange-500/5 backdrop-blur-sm">
               <p className="text-orange-500 text-xs md:text-sm font-bold tracking-[0.4em] uppercase">
-                Protocolo de alianza activo
+                Sistema Operativo de Dominación Digital
               </p>
             </div>
           </div>
 
           <p className="text-zinc-500 text-xs md:text-sm font-bold tracking-[0.2em] uppercase max-w-lg mx-auto leading-relaxed mb-16">
-            Arquitectura diseñada para la dominación digital y escalabilidad infinita.
+            Chat inteligente, estudio visual, producción de video, laboratorio musical, despacho legal, automatización y análisis profundo. Todo en un solo núcleo.
           </p>
 
           <Link 
@@ -238,110 +237,86 @@ export const Landing = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <ServiceCard 
               delay={0.1} 
-              icon={BrainCircuit} 
-              title="Nexus Forge" 
-              desc="Crea y despliega agentes autónomos personalizados." 
+              icon={MessageSquare} 
+              title="Chat Inteligente" 
+              desc="El cerebro del sistema: multimodal, con memoria y comandos rápidos." 
               details={[
-                "Arquitectura multi-agente",
-                "Memoria persistente de largo plazo",
-                "Integración con herramientas externas",
-                "Despliegue en un solo clic"
+                "Soporte GPT-4, Gemini, Claude",
+                "Multimodal (texto, voz, imagen, video)",
+                "Memoria de estilo y objetivos",
+                "Copiloto en tiempo real"
               ]}
             />
             <ServiceCard 
               delay={0.2} 
-              icon={MessageSquare} 
-              title="Nexus Chat" 
-              desc="Razonamiento avanzado con Gemini 3.1 Pro." 
+              icon={ImageIcon} 
+              title="Estudio Visual" 
+              desc="Generación y edición avanzada de imagen y video profesional." 
               details={[
-                "Búsqueda web en tiempo real",
-                "Análisis de documentos masivos",
-                "Generación de código experto",
-                "Contexto de 2M de tokens"
+                "Generación por prompt",
+                "Editor tipo Photoshop (quitar fondo, upscale)",
+                "Branding automático",
+                "Análisis de viralidad de video"
               ]}
             />
             <ServiceCard 
               delay={0.3} 
-              icon={Wand2} 
-              title="Image Editor Pro" 
-              desc="Edición visual avanzada con IA generativa." 
+              icon={Music} 
+              title="Laboratorio Musical" 
+              desc="Producción musical de nivel estudio con IA." 
               details={[
-                "Inpainting y Outpainting",
-                "Eliminación de objetos con IA",
-                "Filtros neuronales de alta gama",
-                "Escalado inteligente (Upscaling)"
+                "Generación de beats y melodías",
+                "Voces sintéticas realistas",
+                "Mezcla automática",
+                "Exportación lista para plataformas"
               ]}
             />
             <ServiceCard 
               delay={0.4} 
-              icon={Mail} 
-              title="Email Studio" 
-              desc="Campañas de correo persuasivas automatizadas." 
+              icon={FileText} 
+              title="Despacho Digital" 
+              desc="Creación de documentos legales y comerciales de alto nivel." 
               details={[
-                "Redacción persuasiva (Copywriting)",
-                "Envío directo desde el sistema",
-                "Personalización dinámica",
-                "Seguimiento de conversiones"
+                "Contratos y propuestas",
+                "Corrector avanzado",
+                "Exportación .docx y PDF",
+                "Plantillas de lujo"
               ]}
             />
             <ServiceCard 
               delay={0.5} 
-              icon={FileText} 
-              title="Doc Generator" 
-              desc="Crea documentos profesionales en segundos." 
+              icon={Mail} 
+              title="Automatización" 
+              desc="Dinero en piloto automático con campañas inteligentes." 
               details={[
-                "Exportación a PDF y Word",
-                "Plantillas corporativas de lujo",
-                "IA especializada en redacción técnica",
-                "Guardado en galería segura"
+                "Campañas de correo",
+                "Seguimiento inteligente",
+                "Triggers de interacción",
+                "Integración multicanal"
               ]}
             />
             <ServiceCard 
               delay={0.6} 
-              icon={Search} 
-              title="Deep Research" 
-              desc="Investigación profunda con fuentes verificadas." 
+              icon={Mic} 
+              title="Estudio de Podcast" 
+              desc="Grabación y producción de audio profesional con IA." 
               details={[
-                "Navegación web autónoma",
-                "Citación de fuentes en tiempo real",
-                "Síntesis de informes ejecutivos",
-                "Análisis comparativo de mercado"
+                "Mejora de audio automática",
+                "Voces IA ultra realistas",
+                "Eliminación de ruido",
+                "Intros/outros automáticas"
               ]}
             />
             <ServiceCard 
               delay={0.7} 
-              icon={Podcast} 
-              title="Podcast Studio" 
-              desc="Convierte cualquier tema en audio profesional." 
+              icon={Search} 
+              title="Investigación" 
+              desc="Análisis profundo y reportes ejecutivos." 
               details={[
-                "Voces neuronales multi-hablante",
-                "Guiones conversacionales naturales",
-                "Música de fondo generada por IA",
-                "Exportación en alta fidelidad"
-              ]}
-            />
-            <ServiceCard 
-              delay={0.8} 
-              icon={Video} 
-              title="Video AI Analysis" 
-              desc="Extrae inteligencia de cualquier video." 
-              details={[
-                "Análisis de fotogramas clave",
-                "Transcripción y resumen automático",
-                "Detección de objetos y escenas",
-                "Q&A interactivo sobre el video"
-              ]}
-            />
-            <ServiceCard 
-              delay={0.9} 
-              icon={Library} 
-              title="Nexus Gallery" 
-              desc="Tu repositorio central de creaciones AI." 
-              details={[
-                "Almacenamiento en la nube seguro",
-                "Organización inteligente por tipo",
-                "Vista previa instantánea",
-                "Compartición rápida de activos"
+                "Búsqueda inteligente con contexto",
+                "Resúmenes ejecutivos",
+                "Análisis de competencia",
+                "Reportes listos para contenido"
               ]}
             />
           </div>
