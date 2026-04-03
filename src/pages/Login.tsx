@@ -53,6 +53,10 @@ export const Login = () => {
           <p className="text-center text-xs text-neutral-500 mt-6">
             By continuing, you agree to our Terms of Service and Privacy Policy.
           </p>
+          <div className="mt-6 text-center text-sm text-neutral-500">
+            <p>¿Problemas para iniciar sesión?</p>
+            <p>Abre esta aplicación en una <strong>pestaña nueva</strong>.</p>
+          </div>
         </div>
       </div>
     </div>
